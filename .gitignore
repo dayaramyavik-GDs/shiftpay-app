@@ -1,0 +1,16 @@
+node_modules/
+platforms/
+plugins/
+www/lib/
+dist/
+coverage/
+# signing secrets - never commit
+*.keystore
+*.jks
+build.json
+.env
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json

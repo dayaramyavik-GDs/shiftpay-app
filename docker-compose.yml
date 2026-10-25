@@ -1,0 +1,28 @@
+services:
+  # Browser demo of the app at http://localhost:8080 (run `npm install` on the host first for www/lib)
+  demo:
+    image: nginx:1.27-alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./www:/usr/share/nginx/html:ro
+
+  # Interactive Linux build shell with the same toolchain as the Dockerfile
+  toolchain:
+    build:
+      context: .
+      target: toolchain
+    working_dir: /app
+    volumes:
+      - .:/app                         # your source code (bind mount)
+      - node_modules:/app/node_modules # Linux node_modules kept apart from Windows ones
+      - platforms:/app/platforms       # Linux Gradle project kept apart from your Windows build
+      - plugins:/app/plugins
+      - gradle-cache:/root/.gradle     # Gradle downloads survive container restarts
+    command: bash
+
+volumes:
+  node_modules:
+  platforms:
+  plugins:
+  gradle-cache:

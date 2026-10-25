@@ -1,0 +1,39 @@
+{
+  "name": "com.dayaram.shiftpay",
+  "displayName": "ShiftPay",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Offline casual-shift pay estimator",
+  "license": "MIT",
+  "scripts": {
+    "vendor": "node scripts/copy-vendor.mjs",
+    "postinstall": "npm run vendor",
+    "serve": "npm run vendor && http-server www -p 8080 -c-1",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "build:debug": "npm run vendor && cordova prepare && cordova build android --debug",
+    "run:device": "cordova run android --device"
+  },
+  "cordova": {
+    "platforms": [
+      "android"
+    ],
+    "plugins": {
+      "cordova-plugin-x-socialsharing": {}
+    }
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "cordova": "^12.0.0",
+    "cordova-android": "^14.0.1",
+    "cordova-plugin-x-socialsharing": "^6.0.4",
+    "eslint": "^9.39.5",
+    "globals": "^17.13.0",
+    "http-server": "^14.1.1",
+    "vitest": "^3.2.7"
+  },
+  "dependencies": {
+    "jspdf": "^3.0.4"
+  }
+}

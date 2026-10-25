@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <title>ShiftPay</title>
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <header class="topbar"><h1 id="screen-title">ShiftPay</h1></header>
+
+  <main>
+    <!-- Pay period -->
+    <section id="screen-period">
+      <div class="period-nav">
+        <button type="button" id="prev-period" class="secondary" aria-label="Previous pay period">‹</button>
+        <div>
+          <div id="period-label"></div>
+          <div id="period-range" class="muted"></div>
+        </div>
+        <button type="button" id="next-period" class="secondary" aria-label="Next pay period">›</button>
+      </div>
+      <p id="rates-warning" class="warning" hidden>Set your hourly rates in Settings to see pay estimates.</p>
+      <div class="card totals">
+        <div><span class="muted">Est. pay</span><strong id="total-pay"></strong></div>
+        <div><span class="muted">Paid hours</span><strong id="total-hours"></strong></div>
+        <div><span class="muted">Shifts</span><strong id="total-shifts"></strong></div>
+      </div>
+      <ul id="shift-list" class="shift-list"></ul>
+      <p id="empty-state" class="muted center" hidden>No shifts in this period yet. Tap + Add to create one.</p>
+      <p class="disclaimer">Estimate only — not payroll or tax advice.</p>
+    </section>
+
+    <!-- Add / edit shift -->
+    <section id="screen-shift" hidden>
+      <form id="shift-form" novalidate>
+        <label>Date
+          <input type="date" name="date" required>
+          <small class="field-error" data-for="date"></small>
+        </label>
+        <div class="row">
+          <label>Start
+            <input type="time" name="start" required>
+            <small class="field-error" data-for="start"></small>
+          </label>
+          <label>End
+            <input type="time" name="end" required>
+            <small class="field-error" data-for="end"></small>
+          </label>
+        </div>
+        <label>Unpaid break (minutes)
+          <input type="number" name="breakMinutes" min="0" step="1" inputmode="numeric">
+          <small class="field-error" data-for="breakMinutes"></small>
+        </label>
+        <label>Rate
+          <select name="rateType">
+            <option value="auto">Automatic (from date)</option>
+            <option value="weekday">Weekday rate</option>
+            <option value="saturday">Saturday rate</option>
+            <option value="sunday">Sunday rate</option>
+          </select>
+          <small class="field-error" data-for="rateType"></small>
+        </label>
+        <label>Note (optional)
+          <input type="text" name="note" maxlength="100" autocomplete="off">
+          <small class="field-error" data-for="note"></small>
+        </label>
+        <output id="shift-preview" class="preview"></output>
+        <div class="actions">
+          <button type="button" id="cancel-shift" class="secondary">Cancel</button>
+          <button type="submit">Save shift</button>
+        </div>
+        <button type="button" id="delete-shift" class="danger" hidden>Delete shift</button>
+      </form>
+    </section>
+
+    <!-- Export -->
+    <section id="screen-export" hidden>
+      <form id="export-form" novalidate>
+        <fieldset>
+          <legend>Date range</legend>
+          <label class="inline"><input type="radio" name="range" value="period" checked>
+            Pay period on screen <span id="export-period-label" class="muted"></span></label>
+          <label class="inline"><input type="radio" name="range" value="custom"> Custom dates</label>
+        </fieldset>
+        <div id="custom-range" class="row" hidden>
+          <label>From <input type="date" name="from"></label>
+          <label>To <input type="date" name="to"></label>
+        </div>
+        <small class="field-error" data-for="range"></small>
+        <div class="actions">
+          <button type="button" data-export="csv">Export CSV</button>
+          <button type="button" data-export="pdf">Export PDF</button>
+        </div>
+        <p class="muted">Exports open your phone's share menu so you can save to Files or Drive, or email them.</p>
+      </form>
+    </section>
+
+    <!-- Settings -->
+    <section id="screen-settings" hidden>
+      <form id="settings-form" novalidate>
+        <label>Currency code
+          <input name="currency" list="currencies" maxlength="3" autocapitalize="characters" placeholder="e.g. USD">
+          <small class="field-error" data-for="currency"></small>
+        </label>
+        <datalist id="currencies">
+          <option value="AUD"><option value="CAD"><option value="EUR"><option value="GBP"><option value="INR">
+          <option value="NZD"><option value="PHP"><option value="SGD"><option value="USD"><option value="ZAR">
+        </datalist>
+        <fieldset>
+          <legend>Hourly rates</legend>
+          <label>Weekday (Mon–Fri)
+            <input name="weekdayRate" inputmode="decimal" placeholder="0.00">
+            <small class="field-error" data-for="weekdayRate"></small>
+          </label>
+          <label>Saturday
+            <input name="saturdayRate" inputmode="decimal" placeholder="0.00">
+            <small class="field-error" data-for="saturdayRate"></small>
+          </label>
+          <label>Sunday
+            <input name="sundayRate" inputmode="decimal" placeholder="0.00">
+            <small class="field-error" data-for="sundayRate"></small>
+          </label>
+        </fieldset>
+        <label>Pay period
+          <select name="periodType">
+            <option value="weekly">Weekly</option>
+            <option value="fortnightly">Fortnightly (every 2 weeks)</option>
+            <option value="monthly">Monthly (calendar month)</option>
+          </select>
+          <small class="field-error" data-for="periodType"></small>
+        </label>
+        <label id="period-start-field">First day of any pay period
+          <input type="date" name="periodStart">
+          <small class="field-error" data-for="periodStart"></small>
+          <small class="muted">Example: if your pay week runs Monday–Sunday, pick any Monday.</small>
+        </label>
+        <button type="submit">Save settings</button>
+        <button type="button" id="erase-data" class="danger">Erase all data</button>
+      </form>
+      <p class="disclaimer">ShiftPay 1.0 · Works offline · No ads, no accounts, no tracking.</p>
+    </section>
+  </main>
+
+  <nav class="bottom-nav" aria-label="Main">
+    <button type="button" data-screen="period">Shifts</button>
+    <button type="button" data-screen="shift">+ Add</button>
+    <button type="button" data-screen="export">Export</button>
+    <button type="button" data-screen="settings">Settings</button>
+  </nav>
+
+  <dialog id="welcome">
+    <form method="dialog">
+      <h2>Welcome to ShiftPay</h2>
+      <p>ShiftPay <strong>estimates</strong> your earnings from the shifts you enter. It is not payroll
+        software and does not give tax, legal or financial advice. Your real pay may differ because of
+        tax, pension/superannuation, penalty rates, allowances and rounding.</p>
+      <p>Everything stays on this device. No account, no internet, no ads.</p>
+      <button value="ok">I understand</button>
+    </form>
+  </dialog>
+
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <script src="cordova.js"></script>
+  <script src="lib/jspdf.umd.min.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

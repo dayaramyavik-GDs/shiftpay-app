@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='utf-8'?>
+<widget id="com.dayaram.shiftpay" version="1.0.0"
+        xmlns="http://www.w3.org/ns/widgets"
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:cdv="http://cordova.apache.org/ns/1.0">
+  <name>ShiftPay</name>
+  <description>Offline pay estimator for casual shift workers.</description>
+  <author href="https://github.com/">ShiftPay</author>
+  <content src="index.html" />
+
+  <preference name="Orientation" value="portrait" />
+  <preference name="BackgroundColor" value="0xfff5f7fa" />
+
+  <platform name="android">
+    <preference name="AndroidWindowSplashScreenBackground" value="#0b6bcb" />
+  </platform>
+</widget>

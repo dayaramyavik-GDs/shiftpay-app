@@ -1,0 +1,11 @@
+.git
+node_modules
+platforms
+plugins
+www/lib
+dist
+coverage
+*.keystore
+*.jks
+build.json
+.env
