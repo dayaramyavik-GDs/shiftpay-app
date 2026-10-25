@@ -13,9 +13,13 @@ if (-not (Test-Path $gh)) { $gh = (Get-Command gh).Source }
 $keytool = (Get-Command keytool -ErrorAction SilentlyContinue).Source
 if (-not $keytool) { throw 'keytool not found. Install JDK 17 and reopen the terminal.' }
 
-if (Test-Path $keystore) {
-  throw "A keystore already exists at $keystore. Keep using it, or move it away first if you really want a new one."
+& $gh auth status --hostname github.com *> $null
+if ($LASTEXITCODE -ne 0) {
+  throw "The GitHub CLI is not logged in in this window. Run: & '$gh' auth login --web   then run this script again."
 }
+
+# An existing keystore is reused (re-running after a failed upload); it is never overwritten.
+$reuse = Test-Path $keystore
 
 function Read-Secret([string]$prompt) {
   $secure = Read-Host $prompt -AsSecureString
@@ -34,24 +38,36 @@ Write-Host 'Password rules: at least 8 characters; letters, numbers and . _ - ! 
 Write-Host 'Save the password in a password manager - without it you can never update the app.'
 Write-Host ''
 
-$password = Read-Secret 'Choose a keystore password'
-# Restricted characters survive every hop (PowerShell, gh, Docker, Gradle) without quoting problems.
-if ($password -notmatch '^[A-Za-z0-9._!@-]{8,}$') { throw 'Password does not meet the rules above.' }
-if ((Read-Secret 'Type it again') -ne $password) { throw 'Passwords did not match.' }
+if ($reuse) {
+  Write-Host "Using the existing keystore at $keystore" -ForegroundColor Yellow
+  $password = Read-Secret 'Enter the keystore password you chose'
+} else {
+  $password = Read-Secret 'Choose a keystore password'
+  # Restricted characters survive every hop (PowerShell, gh, Docker, Gradle) without quoting problems.
+  if ($password -notmatch '^[A-Za-z0-9._!@-]{8,}$') { throw 'Password does not meet the rules above.' }
+  if ((Read-Secret 'Type it again') -ne $password) { throw 'Passwords did not match.' }
 
-$name = (Read-Host 'Your name for the certificate (e.g. Dayaram)') -replace '[^A-Za-z0-9 .-]', ''
-$country = ((Read-Host 'Two-letter country code (e.g. AU, IN, US)') -replace '[^A-Za-z]', '').ToUpper()
-if (-not $name) { $name = 'ShiftPay' }
-if ($country.Length -ne 2) { throw 'Country code must be two letters.' }
-$dname = "CN=$name, O=ShiftPay, C=$country"
+  $name = (Read-Host 'Your name for the certificate (e.g. Dayaram)') -replace '[^A-Za-z0-9 .-]', ''
+  $country = ((Read-Host 'Two-letter country code (e.g. AU, IN, US)') -replace '[^A-Za-z]', '').ToUpper()
+  if (-not $name) { $name = 'ShiftPay' }
+  if ($country.Length -ne 2) { throw 'Country code must be two letters.' }
+  $dname = "CN=$name, O=ShiftPay, C=$country"
+}
 
 New-Item -ItemType Directory -Force $keyDir | Out-Null
 $env:SHIFTPAY_STOREPASS = $password
 try {
-  & $keytool -genkeypair -keystore $keystore -storetype PKCS12 -alias $alias -keyalg RSA -keysize 2048 `
-    -validity 10000 -dname $dname -storepass:env SHIFTPAY_STOREPASS -keypass:env SHIFTPAY_STOREPASS
-  Assert-Ok 'Creating the keystore'
-  Write-Host "Keystore created: $keystore" -ForegroundColor Green
+  if ($reuse) {
+    # Proves the password opens the keystore before it is uploaded.
+    & $keytool -list -keystore $keystore -alias $alias -storepass:env SHIFTPAY_STOREPASS *> $null
+    Assert-Ok 'Opening the keystore with that password (wrong password?)'
+    Write-Host 'Password verified against the keystore.' -ForegroundColor Green
+  } else {
+    & $keytool -genkeypair -keystore $keystore -storetype PKCS12 -alias $alias -keyalg RSA -keysize 2048 `
+      -validity 10000 -dname $dname -storepass:env SHIFTPAY_STOREPASS -keypass:env SHIFTPAY_STOREPASS
+    Assert-Ok 'Creating the keystore'
+    Write-Host "Keystore created: $keystore" -ForegroundColor Green
+  }
 
   $base64 = [Convert]::ToBase64String([IO.File]::ReadAllBytes($keystore))
   & $gh secret set ANDROID_KEYSTORE_BASE64 --repo $repo --body $base64
