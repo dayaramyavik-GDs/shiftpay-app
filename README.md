@@ -46,3 +46,12 @@ Signed release builds and CI are described in `Dockerfile` and `.github/workflow
 ## License
 
 MIT
+
+## Troubleshooting local builds (Windows)
+
+- **`Unsupported class file major version 69`** – Gradle is running on a too-new JDK (often Android
+  Studio's bundled JBR). Point `JAVA_HOME` at JDK 17 for the build:
+  `$env:JAVA_HOME = "C:\Program Files\Eclipse Adoptium\jdk-17.0.20.101-hotspot"`
+- **`No installed build tools found ... 35.0.0`** – install it from PowerShell:
+  `sdkmanager "build-tools;35.0.0"` (or Android Studio → SDK Manager → SDK Tools).
+- **`www/lib` missing / "PDF library not loaded"** – run `npm run vendor`.
